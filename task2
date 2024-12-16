@@ -1,0 +1,88 @@
+#!/bin/bash
+
+exitcode=0
+
+usage="Usage: task2.sh [-s] [-S] [--] FILENAMES ... "
+help="-s - script also prints total file size.\n-S - script outputs only total file size.\n-- - splits options and filenames."
+version="v1.0.0"
+
+_flag=0
+Sflag=0
+sflag=0
+
+S=0
+
+#work with options
+for var in "$@"
+do
+ case "$var" in
+
+ --help)
+        echo $usage;
+        echo -e $help;
+ exit 0;;
+
+        --usage)
+        echo $usage;
+        exit 0;;
+
+        --version)
+        echo $version;
+        exit 0;;
+
+        --)
+ break;;
+
+ -s)
+ sflag=1;
+ continue;;
+
+ -S)
+ Sflag=1;
+ continue;;
+
+ -*)
+ echo "Unsupported option!" >&2;
+        echo -e $help;
+        exit 2;;
+ esac
+done
+
+#work with filenames
+for var in "$@"
+do
+ if [[ "$var" == "--" && $_flag -eq 0 ]];
+ then
+  _flag=1
+  continue
+ fi
+
+ if [[ "$var" == "-s" || "$var" == "-S" ]] && [ $_flag -eq 0 ];
+ then
+  continue
+ fi
+
+ if ! [ -e "$var" ]
+        then
+                echo "File $var doesn't exists!" >&2
+                exitcode=1
+                continue
+        fi
+
+ if [[ $sflag -eq 1 || $Sflag -eq 1 ]]
+ then
+         S=$(($S+$(stat -c%s -- "$var")));
+ fi
+
+        if [ $Sflag -eq 0 ]
+        then
+                echo $(stat -c%s" "%n -- "$var")
+        fi
+done
+
+if [[ $sflag -eq 1 || $Sflag -eq 1 ]]
+then
+ echo $S
+fi
+
+exit $exitcode
